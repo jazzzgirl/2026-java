@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg: #10121B;
@@ -442,8 +444,6 @@
     line-height:1.6;
   }
   .setup-banner button{padding:8px 14px;font-size:12.5px;}
-  #autoSetupResult{margin-top:12px;font-size:12.5px;color:#FFDDDD;line-height:1.7;}
-  #autoSetupResult:empty{display:none;}
   .mono-box{
     font-family:'JetBrains Mono',monospace;
     font-size:12.5px;
@@ -465,6 +465,26 @@
   .teacher-actions button{flex:1;min-width:160px;}
   .btn-ghost.danger{border-color:rgba(255,107,107,0.5);color:var(--coral);}
   .btn-ghost.danger:hover{border-color:var(--coral);background:rgba(255,107,107,0.08);}
+
+  .fb-setup{
+    margin-top:22px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .fb-setup h4{margin:0 0 10px;font-size:13.5px;color:var(--text);}
+  .fb-setup ol{margin:0;padding-left:20px;color:var(--text-dim);font-size:12.5px;line-height:1.9;}
+  .fb-setup li{margin-bottom:4px;}
+  .fb-setup code{
+    font-family:'JetBrains Mono',monospace;
+    background:var(--panel-2);
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:11.5px;
+    color:var(--mint);
+  }
+  .fb-setup a{color:var(--violet);}
 
   /* ---------- mobile tweaks ---------- */
   @media (max-width: 480px){
@@ -532,11 +552,7 @@
     </div>
 
     <div class="setup-banner" id="setupBanner">
-      ⚠️ 순위표 저장 공간이 아직 설정되지 않았습니다.
-      <div style="margin-top:10px;">
-        <button id="autoSetupBtn" class="btn-ghost">저장 공간 자동으로 만들기 (로그인 불필요)</button>
-      </div>
-      <div id="autoSetupResult"></div>
+      ⚠️ 순위표 저장 공간(Firebase)이 아직 설정되지 않았습니다. 교사용 화면에서 설정 안내를 확인해주세요.
     </div>
 
     <!-- START -->
@@ -606,6 +622,17 @@
 
     <h3 style="margin-top:22px;">실시간 순위표</h3>
     <ul id="teacherBoardList"></ul>
+
+    <div class="fb-setup" id="fbSetupInfo">
+      <h4>⚙️ 순위표 저장 공간(Firebase) 설정 방법 — 최초 1회만</h4>
+      <ol>
+        <li><a href="https://console.firebase.google.com" target="_blank">firebase.google.com/console</a> 접속 → 구글 계정으로 로그인 → "프로젝트 추가"로 새 프로젝트 생성 (Analytics는 꺼도 됩니다)</li>
+        <li>왼쪽 메뉴에서 <b>빌드 → Realtime Database</b> 클릭 → "데이터베이스 만들기" → <b>테스트 모드로 시작</b> 선택</li>
+        <li>프로젝트 설정(톱니바퀴) → "내 앱" → 웹 아이콘(&lt;/&gt;) 클릭 → 앱 등록 (호스팅 설정은 건너뛰기)</li>
+        <li>화면에 나오는 <code>firebaseConfig</code> 객체 전체를 복사</li>
+        <li>이 파일에서 <code>const firebaseConfig = { ... }</code> 부분을 찾아 복사한 내용으로 통째로 교체하고 다시 배포</li>
+      </ol>
+    </div>
 
     <button class="btn-ghost" id="backToStudentBtn" style="margin-top:18px;width:100%;">← 학생 화면으로 돌아가기</button>
   </div>
@@ -984,113 +1011,39 @@ function playApplause(){
   }catch(e){ console.warn('audio not available', e); }
 }
 
-/* ---------------- shared leaderboard storage ----------------
-   GitHub Pages only serves static files — there's no server of our own to
-   write to. jsonblob.com is a free, no-signup JSON store: one "blob" holds
-   { leaderboard: [...] } and every visitor's browser reads/writes it over
-   plain fetch(), so all students + the teacher share the same data.
+/* ---------------- shared leaderboard storage (Firebase Realtime Database) ----------------
+   ONE-TIME SETUP (teacher, do this once before class — full walkthrough is
+   also shown on the 교사용 관리 화면 in the app once you're logged in there):
+   1. https://console.firebase.google.com → sign in with a Google account →
+      "프로젝트 추가" to create a new project (Analytics can be turned off).
+   2. Left menu → 빌드 → Realtime Database → "데이터베이스 만들기" →
+      choose "테스트 모드로 시작" (test mode: open read/write, fine for a
+      short classroom activity — lock it down later if you keep using it).
+   3. Project settings (gear icon) → "내 앱" → the web icon (</>) → register
+      an app (skip hosting).
+   4. Copy the whole firebaseConfig object shown on screen.
+   5. Paste it below, replacing the empty {} — then redeploy. */
+const firebaseConfig = {
+  // apiKey: "...",
+  // authDomain: "...",
+  // databaseURL: "...",
+  // projectId: "...",
+  // storageBucket: "...",
+  // messagingSenderId: "...",
+  // appId: "..."
+};
 
-   ONE-TIME SETUP (teacher, do this once before class):
-   1. Go to https://jsonblob.com in a browser.
-   2. Replace the sample text with:  {"leaderboard": []}
-   3. Click "Save" (or the save/checkmark icon). The page URL changes to
-      something like https://jsonblob.com/<long-id>.
-   4. Copy just the <long-id> part and paste it below as JSONBLOB_ID.
-   5. Commit + push this file to GitHub. Done — every student and the
-      teacher will now share the same live leaderboard. */
-const JSONBLOB_ID = ""; // <-- 여기에 위 3~4단계에서 복사한 id를 붙여넣으세요
-const JSONBLOB_URL = JSONBLOB_ID ? ("https://jsonblob.com/api/jsonBlob/" + JSONBLOB_ID) : null;
-const storageAvailable = !!JSONBLOB_URL;
-
+const storageAvailable = !!(firebaseConfig && firebaseConfig.databaseURL);
 if(!storageAvailable) setupBanner.style.display = 'block';
 
-/* Creates a blob via the raw API (no login required — jsonblob.com's
-   website only asks for login on its own editor UI, not on the API).
-   The blob ID comes from the response's Location header; some hosts don't
-   expose that header cross-origin, so we fall back to a copy-pasteable
-   curl command if we can't read it. */
-const autoSetupBtn = document.getElementById('autoSetupBtn');
-const autoSetupResult = document.getElementById('autoSetupResult');
-if(autoSetupBtn){
-  autoSetupBtn.addEventListener('click', async ()=>{
-    autoSetupBtn.disabled = true;
-    const originalLabel = autoSetupBtn.textContent;
-    autoSetupBtn.textContent = '만드는 중...';
-    try{
-      const res = await fetch('https://jsonblob.com/api/jsonBlob', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ leaderboard: [] })
-      });
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      const loc = res.headers.get('Location');
-      const id = loc ? loc.split('/').pop() : null;
-      if(id){
-        autoSetupResult.innerHTML =
-          '✅ 생성되었습니다! 아래 ID를 복사해서 코드 상단의 <code>JSONBLOB_ID</code> 값에 붙여넣고 GitHub에 다시 올려주세요.' +
-          '<div class="mono-box">' + id + '</div>';
-      } else {
-        throw new Error('Location header not readable');
-      }
-    }catch(e){
-      console.warn('auto-create failed', e);
-      autoSetupResult.innerHTML =
-        '자동 생성에 실패했습니다 (브라우저가 응답 헤더를 막았을 수 있어요). 아래 명령어를 터미널이나 ' +
-        '<a href="https://reqbin.com/curl" target="_blank" style="color:#fff;">reqbin.com/curl</a> 같은 곳에 붙여넣어 실행해보세요. ' +
-        '로그인은 필요 없습니다.' +
-        '<div class="mono-box">curl -X POST https://jsonblob.com/api/jsonBlob -H "Content-Type: application/json" -d \'{"leaderboard":[]}\'</div>' +
-        '응답의 <b>Location</b> 헤더 맨 끝부분이 ID입니다.';
-    }
-    autoSetupBtn.disabled = false;
-    autoSetupBtn.textContent = originalLabel;
-  });
-}
-
-async function readLeaderboard(){
-  // returns an array on success, or null to signal a real fetch/parse error
+let lbRef = null;
+if(storageAvailable){
   try{
-    const res = await fetch(JSONBLOB_URL, { headers: { 'Accept': 'application/json' } });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    return Array.isArray(data.leaderboard) ? data.leaderboard : [];
+    firebase.initializeApp(firebaseConfig);
+    lbRef = firebase.database().ref('leaderboard');
   }catch(e){
-    console.warn('leaderboard read failed', e);
-    return null;
+    console.warn('firebase init failed', e);
   }
-}
-
-async function saveResult(name, timeMs){
-  if(!storageAvailable) return;
-  try{
-    const current = await readLeaderboard();
-    const list = Array.isArray(current) ? current : [];
-    list.push({ name, timeMs, ts: Date.now() });
-    list.sort((a,b)=> a.timeMs - b.timeMs);
-    const trimmed = list.slice(0, 50);
-    const res = await fetch(JSONBLOB_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ leaderboard: trimmed })
-    });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-  }catch(e){
-    console.warn('leaderboard save failed', e);
-    feedback.textContent = '기록 저장 중 문제가 발생했어요. 순위표에 반영되지 않을 수 있습니다.';
-    feedback.className = 'wrong';
-  }
-}
-
-async function loadLeaderboard(){
-  if(!storageAvailable){
-    setBoardMessage('순위표 저장 공간이 아직 설정되지 않았습니다.');
-    return;
-  }
-  const entries = await readLeaderboard();
-  if(entries === null){
-    setBoardMessage('순위표를 불러오지 못했습니다. 잠시 후 다시 시도합니다.');
-    return;
-  }
-  renderBoard(entries);
 }
 
 function boardTargets(){
@@ -1117,12 +1070,37 @@ function renderBoard(entries){
   });
 }
 
+if(lbRef){
+  // .on('value', ...) fires immediately with current data, then again on every
+  // change from any student's browser — genuinely realtime, no polling needed.
+  lbRef.on('value', (snapshot) => {
+    const val = snapshot.val() || {};
+    const entries = Object.values(val).sort((a,b)=> a.timeMs - b.timeMs);
+    renderBoard(entries);
+  }, (err) => {
+    console.warn('leaderboard listener failed', err);
+    setBoardMessage('순위표를 불러오지 못했습니다. Firebase 설정(규칙 포함)을 확인해주세요.');
+  });
+} else if(storageAvailable === false){
+  setBoardMessage('순위표 저장 공간이 아직 설정되지 않았습니다.');
+}
+
+async function saveResult(name, timeMs){
+  if(!lbRef) return;
+  try{
+    await lbRef.push({ name, timeMs, ts: Date.now() });
+  }catch(e){
+    console.warn('leaderboard save failed', e);
+    feedback.textContent = '기록 저장 중 문제가 발생했어요. 순위표에 반영되지 않을 수 있습니다.';
+    feedback.className = 'wrong';
+  }
+}
+
 async function onSolved(elapsedSec){
   const timeMs = Math.round(elapsedSec*1000);
   launchConfetti();
   playApplause();
   await saveResult(playerName, timeMs);
-  await loadLeaderboard();
 
   setTimeout(()=>{
     gameScreen.style.display = 'none';
@@ -1131,11 +1109,6 @@ async function onSolved(elapsedSec){
     resultTime.textContent = (timeMs/1000).toFixed(1);
   }, 900);
 }
-
-/* initial load + light polling so the board updates live while other
-   students are playing on other devices */
-loadLeaderboard();
-setInterval(loadLeaderboard, 4000);
 
 /* ---------------- teacher screen (password-gated) ---------------- */
 const TEACHER_PASSWORD = 'silla123!@#';
@@ -1163,7 +1136,6 @@ function tryTeacherLogin(){
     pwOverlay.classList.remove('open');
     studentArea.style.display = 'none';
     teacherScreen.style.display = 'block';
-    loadLeaderboard();
   } else {
     pwError.textContent = '비밀번호가 올바르지 않습니다.';
   }
@@ -1179,20 +1151,14 @@ backToStudentBtn.addEventListener('click', ()=>{
 /* teacher-only: clear the leaderboard so a new class can start fresh */
 const resetBoardBtn = document.getElementById('resetBoardBtn');
 resetBoardBtn.addEventListener('click', async ()=>{
-  if(!storageAvailable){
+  if(!lbRef){
     alert('순위표 저장 공간이 설정되지 않아 초기화할 것이 없습니다.');
     return;
   }
   const ok = confirm('순위표의 모든 기록을 삭제할까요? 되돌릴 수 없습니다.');
   if(!ok) return;
   try{
-    const res = await fetch(JSONBLOB_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ leaderboard: [] })
-    });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    await loadLeaderboard();
+    await lbRef.remove();
     alert('순위표를 초기화했습니다.');
   }catch(e){
     console.warn('reset failed', e);
