@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>변수 OX 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --bg-1: #FFF7E8;
+    --bg-2: #FFFFFF;
+    --panel: #FFFFFF;
+    --panel-2: #FFF3D6;
+    --line: #FFE3AE;
+    --text: #3A2E52;
+    --text-dim: #9088A0;
+    --mint: #58C255;
+    --mint-dark: #3FA13E;
+    --amber: #FFC93C;
+    --amber-dark: #F0A500;
+    --coral: #FF5C68;
+    --coral-dark: #E23E4B;
+    --violet: #A66CFF;
+    --violet-dark: #8347E0;
+    --sky: #33C6E8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 10% -10%, rgba(255,201,60,0.35), transparent 55%),
+      radial-gradient(800px 480px at 100% 0%, rgba(51,198,232,0.25), transparent 55%),
+      radial-gradient(900px 600px at 50% 120%, rgba(166,108,255,0.18), transparent 55%),
+      var(--bg-1);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding:28px 16px 60px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:640px;}
+
+  .top{margin-bottom:16px;}
+  .brand{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.01em;
+    color:var(--violet-dark);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(255,201,60,0.3);}
+  h1{
+    font-family:'Baloo 2',sans-serif;
+    font-size:28px;line-height:1.25;margin:6px 0 4px;font-weight:800;letter-spacing:-0.01em;
+    color:var(--text);
+  }
+  .sub{color:var(--text-dim);font-size:14px;line-height:1.6;margin:0;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:24px;
+    margin-bottom:18px;
+    box-shadow:0 12px 28px -14px rgba(90,60,20,0.18);
+  }
+
+  #startScreen label{display:block;font-size:13px;color:var(--text-dim);margin-bottom:8px;font-weight:700;}
+  #startScreen input{
+    width:100%;
+    background:var(--bg-1);
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    color:var(--text);
+    font-size:16px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    transition:border-color .15s;
+  }
+  #startScreen input:focus{border-color:var(--violet);}
+  .rules{
+    margin:18px 0 20px;
+    padding:16px 18px;
+    background:var(--panel-2);
+    border-radius:16px;
+    border:1px solid var(--line);
+    font-size:13.5px;
+    color:#7A6E52;
+    line-height:1.8;
+  }
+  .rules b{color:var(--text);}
+
+  button{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    border:none;
+    border-radius:14px;
+    padding:15px 22px;
+    cursor:pointer;
+    transition:transform .08s, box-shadow .1s, opacity .15s;
+  }
+  button:active{transform:translateY(2px);}
+  .btn-primary{
+    background:var(--mint);
+    color:#fff;
+    width:100%;
+    box-shadow:0 5px 0 var(--mint-dark);
+  }
+  .btn-primary:active{box-shadow:0 2px 0 var(--mint-dark);}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:0 5px 0 rgba(0,0,0,0.1);}
+  .btn-ghost{background:var(--bg-1);color:var(--text-dim);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);}
+  .btn-ghost:active{box-shadow:0 1px 0 var(--line);}
+  .btn-ghost:hover{border-color:var(--violet);color:var(--violet-dark);}
+  .btn-ghost.danger{border-color:#FFCDD1;color:var(--coral-dark);}
+  .btn-ghost.danger:hover{border-color:var(--coral);background:#FFF2F3;}
+
+  /* ---------- quiz screen ---------- */
+  #quizScreen{display:none;}
+  .quiz-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+  .player-chip{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--violet-dark);
+    background:#F3E9FF;
+    border:1px solid #E3CFFF;
+    padding:6px 14px;
+    border-radius:999px;
+    flex-shrink:0;
+  }
+  .progress-wrap{display:flex;align-items:center;gap:10px;flex:1;min-width:120px;}
+  .progress-label{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:13px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+  .progress-track{flex:1;height:10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--amber), var(--coral));border-radius:999px;transition:width .3s ease;width:0%;}
+
+  .statement-card{
+    background:var(--panel-2);
+    border:2px solid var(--line);
+    border-radius:20px;
+    padding:32px 22px;
+    min-height:120px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:18px;
+    line-height:1.6;
+    color:var(--text);
+    margin-bottom:22px;
+  }
+
+  .ox-row{display:flex;gap:16px;}
+  .ox-btn{
+    flex:1;
+    padding:30px 10px;
+    border-radius:20px;
+    border:none;
+    background:var(--bg-1);
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    font-size:42px;
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:transform .1s, box-shadow .1s, background .15s, color .15s;
+    touch-action:manipulation;
+    box-shadow:0 6px 0 var(--line);
+  }
+  .ox-btn:active{transform:translateY(3px);box-shadow:0 3px 0 var(--line);}
+  .ox-btn.o{color:var(--mint-dark);background:#EAFBE8;box-shadow:0 6px 0 #BFE8BC;}
+  .ox-btn.x{color:var(--coral-dark);background:#FFEDEE;box-shadow:0 6px 0 #FFC9CD;}
+  .ox-btn:disabled{cursor:default;}
+  .ox-btn.chosen-correct{background:var(--mint);color:#fff;box-shadow:0 6px 0 var(--mint-dark);}
+  .ox-btn.chosen-wrong{background:var(--coral);color:#fff;box-shadow:0 6px 0 var(--coral-dark);}
+  .ox-btn.reveal-correct{background:#EAFBE8;box-shadow:0 6px 0 var(--mint);}
+  .ox-btn.faded{opacity:0.35;}
+
+  /* ---------- result screen ---------- */
+  #resultScreen{display:none;text-align:center;}
+  #resultScreen .medal{font-size:48px;margin-bottom:4px;}
+  #resultScreen h2{font-family:'Baloo 2',sans-serif;font-size:22px;margin:2px 0 16px;color:var(--text);}
+  .score-circle{
+    width:154px;height:154px;
+    border-radius:50%;
+    border:8px solid var(--amber);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 18px;
+    background:#FFFBEF;
+    box-shadow:0 10px 24px -10px rgba(240,165,0,0.4);
+  }
+  .score-circle .num{
+    font-family:'Baloo 2',sans-serif;
+    font-size:40px;
+    font-weight:800;
+    color:var(--amber-dark);
+    line-height:1;
+  }
+  .score-circle .denom{font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;color:var(--text-dim);margin-top:4px;}
+  .score-sub{color:var(--text-dim);font-size:14px;margin-bottom:20px;}
+  .score-sub b{color:var(--text);}
+
+  .review-section{text-align:left;margin-top:8px;}
+  .review-section h3{font-family:'Baloo 2',sans-serif;font-size:15px;color:var(--text);margin:0 0 12px;}
+  .review-item{
+    background:#FFF6F6;
+    border:1px solid #FFDDE0;
+    border-left:4px solid var(--coral);
+    border-radius:14px;
+    padding:13px 15px;
+    margin-bottom:10px;
+    font-size:13.5px;
+    line-height:1.6;
+  }
+  .review-item .stmt{font-family:'Inter',sans-serif;font-weight:600;color:var(--text);margin-bottom:6px;}
+  .review-item .ans-row{display:flex;gap:14px;font-size:12.5px;font-weight:700;}
+  .review-item .my-ans{color:var(--coral-dark);}
+  .review-item .correct-ans{color:var(--mint-dark);}
+  .all-correct-msg{color:var(--mint-dark);font-size:15px;text-align:center;padding:10px 0;font-weight:700;font-family:'Baloo 2',sans-serif;}
+
+  .result-actions{margin-top:20px;}
+
+  /* ---------- leaderboard ---------- */
+  #board h3{font-family:'Baloo 2',sans-serif;font-size:15px;margin:0 0 14px;color:var(--text);font-weight:700;display:flex;align-items:center;gap:8px;}
+  #board h3 .gift{font-size:17px;}
+  #boardList, #teacherBoardList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  #boardList li, #teacherBoardList li{
+    display:flex;align-items:center;gap:12px;
+    background:var(--bg-1);border:1px solid var(--line);border-radius:14px;
+    padding:11px 15px;font-size:14px;
+  }
+  #boardList li.top1, #teacherBoardList li.top1{border-color:var(--amber);background:#FFF7E0;}
+  .rank{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;width:26px;text-align:center;color:var(--text-dim);flex-shrink:0;}
+  li.top1 .rank{color:var(--amber-dark);}
+  .lb-name{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-score{font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--mint-dark);font-variant-numeric: tabular-nums;}
+  .empty-board{color:var(--text-dim);font-size:13.5px;text-align:center;padding:14px 0;}
+
+  #confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:50;}
+
+  footer{text-align:center;color:var(--text-dim);font-size:12px;margin-top:6px;}
+  .teacher-link{
+    display:inline-block;margin-top:10px;background:none;border:none;
+    color:#D8CBB0;font-size:11px;padding:4px 8px;cursor:pointer;
+    text-decoration:underline;text-decoration-color:transparent;
+  }
+  .teacher-link:hover{color:var(--text-dim);}
+
+  /* ---------- modals ---------- */
+  #qrOverlay, #pwOverlay{
+    display:none;position:fixed;inset:0;background:rgba(58,46,82,0.45);
+    z-index:100;align-items:center;justify-content:center;padding:20px;
+  }
+  #qrOverlay.open, #pwOverlay.open{display:flex;}
+  #qrModal, #pwModal{
+    background:var(--panel);border:1px solid var(--line);border-radius:22px;
+    padding:26px;max-width:340px;width:100%;text-align:center;
+    box-shadow:0 20px 50px -20px rgba(58,46,82,0.4);
+  }
+  #qrModal h3, #pwModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--text);}
+  #qrModal p, #pwModal p{color:var(--text-dim);font-size:13px;margin:4px 0 16px;line-height:1.6;}
+  #qrCodeBox{background:#fff;border-radius:14px;padding:14px;display:inline-block;margin-bottom:14px;border:1px solid var(--line);}
+  #qrLinkText{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-dim);
+    word-break:break-all;background:var(--bg-1);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;margin-bottom:14px;
+  }
+  #qrCloseBtn{width:100%;}
+  #pwModal input{
+    width:100%;background:var(--bg-1);border:2px solid var(--line);border-radius:14px;
+    padding:13px 14px;color:var(--text);font-size:16px;font-family:'Inter',sans-serif;
+    outline:none;margin-bottom:6px;
+  }
+  #pwModal input:focus{border-color:var(--violet);}
+  #pwError{color:var(--coral-dark);font-size:12.5px;min-height:16px;text-align:left;margin-bottom:8px;font-weight:600;}
+  .pw-actions{display:flex;gap:8px;margin-top:8px;}
+  .pw-actions button{flex:1;}
+
+  .setup-banner{
+    display:none;background:#FFF3D6;border:1.5px solid var(--amber);
+    color:#8A5A00;font-size:13px;padding:12px 16px;border-radius:14px;margin-bottom:16px;line-height:1.6;font-weight:600;
+  }
+
+  /* ---------- teacher screen ---------- */
+  #teacherScreen{display:none;}
+  #teacherScreen h2{font-family:'Baloo 2',sans-serif;font-size:20px;margin:0 0 4px;color:var(--text);}
+  #teacherScreen h3{font-family:'Baloo 2',sans-serif;font-size:15px;color:var(--text);margin:0 0 12px;}
+  .teacher-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  .teacher-actions button{flex:1;min-width:160px;}
+
+  @media (max-width: 480px){
+    body{padding:18px 12px 40px;}
+    h1{font-size:22px;}
+    .panel{padding:18px;border-radius:18px;}
+    .statement-card{font-size:16px;padding:26px 16px;}
+    .ox-btn{font-size:34px;padding:24px 8px;}
+    .score-circle{width:132px;height:132px;}
+    .score-circle .num{font-size:34px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="confettiCanvas"></canvas>
+
+<div id="qrOverlay">
+  <div id="qrModal">
+    <h3>학생용 접속 QR 코드</h3>
+    <p>학생들이 휴대폰 카메라로 스캔하면 이 페이지로 바로 접속됩니다.</p>
+    <div id="qrCodeBox"></div>
+    <div id="qrLinkText"></div>
+    <button class="btn-ghost" id="qrCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div id="pwOverlay">
+  <div id="pwModal">
+    <h3>교사 인증</h3>
+    <p>비밀번호를 입력하세요.</p>
+    <input type="password" id="pwInput" placeholder="비밀번호" autocomplete="off">
+    <div id="pwError"></div>
+    <div class="pw-actions">
+      <button class="btn-ghost" id="pwCancelBtn">취소</button>
+      <button class="btn-primary" id="pwSubmitBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- STUDENT-FACING AREA -->
+  <div id="studentArea">
+    <div class="top">
+      <div class="brand"><span class="dot"></span>VARIABLE OX QUIZ</div>
+      <h1>변수 OX 퀴즈</h1>
+      <p class="sub">자바 변수에 관한 문장이 맞으면 O, 틀리면 X를 눌러주세요.</p>
+    </div>
+
+    <div class="setup-banner" id="setupBanner">⚠️ 순위표 저장 공간(Firebase)이 아직 설정되지 않았습니다. 교사용 화면 안내를 확인해주세요.</div>
+
+    <!-- START -->
+    <div class="panel" id="startScreen">
+      <label for="nameInput">이름 / Name</label>
+      <input id="nameInput" type="text" placeholder="이름을 입력하세요" maxlength="20" autocomplete="off">
+      <div class="rules">
+        <b>진행 방법</b><br>
+        1. 이름을 입력하고 "문제 풀기" 버튼을 누르세요.<br>
+        2. 화면의 문장을 읽고 맞으면 <b>O</b>, 틀리면 <b>X</b>를 터치하세요.<br>
+        3. 총 <b>10문제</b>를 풀면 맞은 개수와 틀린 문제를 바로 확인할 수 있어요.<br>
+        4. 다 풀고 나면 전체 순위표도 볼 수 있습니다 🏆
+      </div>
+      <button class="btn-primary" id="startBtn" disabled>문제 풀기 (Start)</button>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="panel" id="quizScreen">
+      <div class="quiz-head">
+        <span class="player-chip" id="playerChip"></span>
+        <div class="progress-wrap">
+          <span class="progress-label" id="progressLabel">1 / 10</span>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div class="statement-card" id="statementCard"></div>
+      <div class="ox-row">
+        <button class="ox-btn o" id="oBtn">O</button>
+        <button class="ox-btn x" id="xBtn">X</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="panel" id="resultScreen">
+      <div class="medal">🎉</div>
+      <h2 id="resultName"></h2>
+      <div class="score-circle">
+        <span class="num" id="scoreNum">0</span>
+        <span class="denom">/ 10 정답</span>
+      </div>
+      <p class="score-sub" id="scoreSub"></p>
+
+      <div class="review-section" id="reviewSection">
+        <h3>📝 틀린 문제 다시보기</h3>
+        <div id="reviewList"></div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-ghost" id="playAgainBtn" style="width:100%;">다른 학생 도전 (Next player)</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD (only shown after finishing) -->
+    <div class="panel" id="board" style="display:none;">
+      <h3><span class="gift">🏆</span>실시간 순위표 — 정답 개수 순</h3>
+      <ul id="boardList"></ul>
+    </div>
+
+    <footer>
+      학생마다 20문제 중 서로 다른 10문제가 무작위로 배정됩니다<br>
+      <button id="teacherLinkBtn" class="teacher-link">교사용 관리 화면</button>
+    </footer>
+  </div>
+
+  <!-- TEACHER-ONLY AREA (password-gated) -->
+  <div class="panel" id="teacherScreen">
+    <h2>🔒 교사용 관리 화면</h2>
+    <p class="sub">이 화면은 비밀번호를 아는 교사에게만 보입니다. 학생 화면에는 노출되지 않습니다.</p>
+
+    <div class="teacher-actions">
+      <button class="btn-ghost" id="qrTriggerBtn">📱 학생용 QR 코드 보기</button>
+      <button class="btn-ghost danger" id="resetBoardBtn">🗑 순위표 초기화</button>
+    </div>
+
+    <h3 style="margin-top:22px;">실시간 순위표</h3>
+    <ul id="teacherBoardList"></ul>
+
+    <button class="btn-ghost" id="backToStudentBtn" style="margin-top:18px;width:100%;">← 학생 화면으로 돌아가기</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- question bank ---------------- */
+/* 20 O/X statements about Java variables. Each student gets a random,
+   non-repeating set of 10 from this pool (mirrors the code-sort game),
+   so neighbors are less likely to see identical quizzes in the same order. */
+const QUESTIONS = [
+  { statement: 'int age = 20; 은 올바른 자바 코드이다.', answer: true },
+  { statement: '20age 는 올바른 변수 이름이다.', answer: false },
+  { statement: '변수는 한 번 선언하면 값을 절대 바꿀 수 없다.', answer: false },
+  { statement: 'String name = "Anh"; 은 올바른 코드이다.', answer: true },
+  { statement: 'int score = "90"; 은 올바른 코드이다.', answer: false },
+  { statement: 'boolean 타입은 true와 false, 두 값만 가질 수 있다.', answer: true },
+  { statement: "char grade = 'A'; 는 올바른 코드이다.", answer: true },
+  { statement: 'char grade = "A"; 는 올바른 코드이다.', answer: false },
+  { statement: '변수 이름에는 공백(띄어쓰기)을 포함할 수 있다.', answer: false },
+  { statement: 'double price = 1500.0; 는 올바른 코드이다.', answer: true },
+  { statement: 'int 타입은 소수점이 있는 값을 저장할 수 있다.', answer: false },
+  { statement: '변수를 선언할 때는 데이터 타입을 지정해야 한다.', answer: true },
+  { statement: 'my_age 는 올바른 변수 이름이다.', answer: true },
+  { statement: 'class 는 변수 이름으로 사용할 수 있다.', answer: false },
+  { statement: '같은 이름의 변수를 한 메서드 안에서 두 번 선언할 수 있다.', answer: false },
+  { statement: '변수 이름은 대소문자를 구분한다. (age와 Age는 다른 변수)', answer: true },
+  { statement: 'int total; 선언 후 바로 println(total); 을 하면 정상 실행된다.', answer: false },
+  { statement: 'String 타입은 여러 글자로 된 문자열을 저장할 수 있다.', answer: true },
+  { statement: 'int x = 5; int y = x; 이후 x를 바꿔도 y는 바뀌지 않는다.', answer: true },
+  { statement: '변수 이름은 숫자로 시작해도 된다.', answer: false },
+];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+const TOTAL_QUESTIONS = 10;
+let sessionQuestions = [];
+let sessionIndex = 0;
+let correctCount = 0;
+let wrongList = [];
+let playerName = "";
+let answering = false;
+
+/* ---------------- element refs ---------------- */
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const resultScreen = document.getElementById('resultScreen');
+const board = document.getElementById('board');
+const nameInput = document.getElementById('nameInput');
+const startBtn = document.getElementById('startBtn');
+const playerChip = document.getElementById('playerChip');
+const progressLabel = document.getElementById('progressLabel');
+const progressFill = document.getElementById('progressFill');
+const statementCard = document.getElementById('statementCard');
+const oBtn = document.getElementById('oBtn');
+const xBtn = document.getElementById('xBtn');
+const resultName = document.getElementById('resultName');
+const scoreNum = document.getElementById('scoreNum');
+const scoreSub = document.getElementById('scoreSub');
+const reviewSection = document.getElementById('reviewSection');
+const reviewList = document.getElementById('reviewList');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const boardList = document.getElementById('boardList');
+const teacherBoardList = document.getElementById('teacherBoardList');
+const setupBanner = document.getElementById('setupBanner');
+
+nameInput.addEventListener('input', ()=>{
+  startBtn.disabled = nameInput.value.trim().length === 0;
+});
+nameInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !startBtn.disabled) startGame();
+});
+startBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', ()=> location.reload());
+
+function startGame(){
+  playerName = nameInput.value.trim().slice(0,20);
+  if(!playerName) return;
+
+  sessionQuestions = shuffle(QUESTIONS).slice(0, TOTAL_QUESTIONS);
+  sessionIndex = 0;
+  correctCount = 0;
+  wrongList = [];
+
+  playerChip.textContent = "👤 " + playerName;
+  startScreen.style.display = 'none';
+  quizScreen.style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answering = true;
+  const q = sessionQuestions[sessionIndex];
+  statementCard.textContent = q.statement;
+  progressLabel.textContent = (sessionIndex + 1) + " / " + TOTAL_QUESTIONS;
+  progressFill.style.width = Math.round((sessionIndex / TOTAL_QUESTIONS) * 100) + "%";
+
+  [oBtn, xBtn].forEach(b => {
+    b.disabled = false;
+    b.classList.remove('chosen-correct','chosen-wrong','reveal-correct','faded');
+  });
+}
+
+function handleAnswer(myAnswer){
+  if(!answering) return;
+  answering = false;
+  const q = sessionQuestions[sessionIndex];
+  const isCorrect = (myAnswer === q.answer);
+  const chosenBtn = myAnswer ? oBtn : xBtn;
+  const otherBtn = myAnswer ? xBtn : oBtn;
+  const correctBtn = q.answer ? oBtn : xBtn;
+
+  oBtn.disabled = true;
+  xBtn.disabled = true;
+
+  if(isCorrect){
+    correctCount++;
+    chosenBtn.classList.add('chosen-correct');
+    otherBtn.classList.add('faded');
+    playDing(true);
+  } else {
+    wrongList.push({ statement: q.statement, correct: q.answer, mine: myAnswer });
+    chosenBtn.classList.add('chosen-wrong');
+    correctBtn.classList.add('reveal-correct');
+    playDing(false);
+  }
+
+  setTimeout(()=>{
+    if(sessionIndex < TOTAL_QUESTIONS - 1){
+      sessionIndex++;
+      renderQuestion();
+    } else {
+      progressLabel.textContent = TOTAL_QUESTIONS + " / " + TOTAL_QUESTIONS;
+      progressFill.style.width = '100%';
+      finishQuiz();
+    }
+  }, 750);
+}
+
+oBtn.addEventListener('click', ()=> handleAnswer(true));
+xBtn.addEventListener('click', ()=> handleAnswer(false));
+
+function finishQuiz(){
+  quizScreen.style.display = 'none';
+  resultScreen.style.display = 'block';
+  board.style.display = 'block';
+
+  resultName.textContent = playerName + " 님의 결과";
+  scoreNum.textContent = correctCount;
+  const wrongCount = TOTAL_QUESTIONS - correctCount;
+  scoreSub.innerHTML = '<b>' + correctCount + '개 정답</b> · ' + wrongCount + '개 오답';
+
+  renderReview();
+  launchConfetti(90);
+  playApplause();
+  saveResult(playerName, correctCount);
+}
+
+function renderReview(){
+  if(wrongList.length === 0){
+    reviewList.innerHTML = '';
+    reviewSection.querySelector('h3').style.display = 'none';
+    const msg = document.createElement('div');
+    msg.className = 'all-correct-msg';
+    msg.textContent = '🎉 전부 정답입니다! 완벽해요!';
+    reviewList.appendChild(msg);
+    return;
+  }
+  reviewSection.querySelector('h3').style.display = 'block';
+  reviewList.innerHTML = '';
+  wrongList.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML =
+      '<div class="stmt"></div>' +
+      '<div class="ans-row"><span class="my-ans">내 답: ' + (item.mine ? 'O' : 'X') + '</span>' +
+      '<span class="correct-ans">정답: ' + (item.correct ? 'O' : 'X') + '</span></div>';
+    div.querySelector('.stmt').textContent = item.statement;
+    reviewList.appendChild(div);
+  });
+}
+
+/* ---------------- confetti ---------------- */
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function launchConfetti(count){
+  count = count || 160;
+  const colors = ['#58C255','#FFC93C','#A66CFF','#FF5C68','#33C6E8'];
+  const particles = [];
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: canvas.width/2 + (Math.random()-0.5)*200,
+      y: -20 - Math.random()*200,
+      vx: (Math.random()-0.5)*6,
+      vy: Math.random()*3 + 2,
+      size: Math.random()*7+4,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI*2,
+      vr: (Math.random()-0.5)*0.3,
+      shape: Math.random()<0.5 ? 'rect':'circle'
+    });
+  }
+  let frame = 0;
+  const maxFrames = 200;
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if(p.shape === 'rect'){ ctx.fillRect(-p.size/2,-p.size/2*0.6,p.size,p.size*0.6); }
+      else { ctx.beginPath(); ctx.arc(0,0,p.size/2,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    });
+    frame++;
+    if(frame < maxFrames){ requestAnimationFrame(tick); }
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); }
+  }
+  tick();
+}
+
+/* ---------------- sound (synth, no external files) ---------------- */
+function playDing(isCorrect){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const actx = new AudioCtx();
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = isCorrect ? 880 : 220;
+    g.gain.value = 0.0001;
+    osc.connect(g); g.connect(actx.destination);
+    const t0 = actx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.2, t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+0.3);
+    osc.start(t0); osc.stop(t0+0.35);
+    setTimeout(()=>actx.close(), 500);
+  }catch(e){ console.warn('audio not available', e); }
+}
+
+function playApplause(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const actx = new AudioCtx();
+    const master = actx.createGain();
+    master.gain.value = 0.35;
+    master.connect(actx.destination);
+
+    function clap(time, gainVal){
+      const bufferSize = actx.sampleRate * 0.12;
+      const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2 -1) * Math.pow(1 - i/bufferSize, 2);
+      }
+      const src = actx.createBufferSource();
+      src.buffer = buffer;
+      const bp = actx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1500 + Math.random()*1500;
+      bp.Q.value = 0.7;
+      const g = actx.createGain();
+      g.gain.value = gainVal;
+      src.connect(bp); bp.connect(g); g.connect(master);
+      src.start(time);
+    }
+
+    const now = actx.currentTime;
+    for(let i=0;i<45;i++){ clap(now + Math.random()*1.3, 0.5 + Math.random()*0.5); }
+
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i)=>{
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.value = 0.0001;
+      osc.connect(g); g.connect(actx.destination);
+      const t0 = now + i*0.09;
+      g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+0.5);
+      osc.start(t0); osc.stop(t0+0.55);
+    });
+
+    setTimeout(()=>actx.close(), 2200);
+  }catch(e){ console.warn('audio not available', e); }
+}
+
+/* ---------------- shared leaderboard storage (Firebase Realtime Database) ----------------
+   Reuses the same Firebase project already set up for the code-sort game,
+   just under a different database path ('ox-leaderboard') so the two
+   games' scores don't mix. No extra setup needed if that project is
+   still active. */
+const firebaseConfig = {
+  apiKey: "AIzaSyBK-SpHbrGI_uOVN0wytsLgFZ8sVuozOwc",
+  authDomain: "javagame-222db.firebaseapp.com",
+  databaseURL: "https://javagame-222db-default-rtdb.firebaseio.com",
+  projectId: "javagame-222db",
+  storageBucket: "javagame-222db.firebasestorage.app",
+  messagingSenderId: "179926589148",
+  appId: "1:179926589148:web:c3f015004f188841835e19",
+  measurementId: "G-P8772EJZE0"
+};
+
+const storageAvailable = !!(firebaseConfig && firebaseConfig.databaseURL);
+if(!storageAvailable) setupBanner.style.display = 'block';
+
+let lbRef = null;
+if(storageAvailable){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    lbRef = firebase.database().ref('ox-leaderboard');
+  }catch(e){
+    console.warn('firebase init failed', e);
+  }
+}
+
+function boardTargets(){
+  return [boardList, teacherBoardList].filter(Boolean);
+}
+function setBoardMessage(msg){
+  boardTargets().forEach(el => { el.innerHTML = '<div class="empty-board">' + msg + '</div>'; });
+}
+function renderBoard(entries){
+  boardTargets().forEach(el => {
+    el.innerHTML = '';
+    if(entries.length === 0){
+      el.innerHTML = '<div class="empty-board">아직 기록이 없습니다. 첫 번째 도전자가 되어보세요!</div>';
+      return;
+    }
+    entries.slice(0,10).forEach((e,i)=>{
+      const li = document.createElement('li');
+      if(i===0) li.className = 'top1';
+      const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+      li.innerHTML = `<span class="rank">${medal}</span><span class="lb-name"></span><span class="lb-score">${e.correct}/${TOTAL_QUESTIONS}</span>`;
+      li.querySelector('.lb-name').textContent = e.name;
+      el.appendChild(li);
+    });
+  });
+}
+
+if(lbRef){
+  lbRef.on('value', (snapshot) => {
+    const val = snapshot.val() || {};
+    const entries = Object.values(val).sort((a,b)=> (b.correct - a.correct) || (a.ts - b.ts));
+    renderBoard(entries);
+  }, (err) => {
+    console.warn('leaderboard listener failed', err);
+    setBoardMessage('순위표를 불러오지 못했습니다. Firebase 설정(규칙 포함)을 확인해주세요.');
+  });
+} else {
+  setBoardMessage('순위표 저장 공간이 아직 설정되지 않았습니다.');
+}
+
+async function saveResult(name, correct){
+  if(!lbRef) return;
+  try{
+    await lbRef.push({ name, correct, ts: Date.now() });
+  }catch(e){
+    console.warn('leaderboard save failed', e);
+  }
+}
+
+/* ---------------- teacher screen (password-gated) ---------------- */
+const TEACHER_PASSWORD = 'silla123!@#';
+const studentArea = document.getElementById('studentArea');
+const teacherScreen = document.getElementById('teacherScreen');
+const teacherLinkBtn = document.getElementById('teacherLinkBtn');
+const backToStudentBtn = document.getElementById('backToStudentBtn');
+const pwOverlay = document.getElementById('pwOverlay');
+const pwInput = document.getElementById('pwInput');
+const pwError = document.getElementById('pwError');
+const pwSubmitBtn = document.getElementById('pwSubmitBtn');
+const pwCancelBtn = document.getElementById('pwCancelBtn');
+
+teacherLinkBtn.addEventListener('click', ()=>{
+  pwInput.value = '';
+  pwError.textContent = '';
+  pwOverlay.classList.add('open');
+  setTimeout(()=> pwInput.focus(), 50);
+});
+pwCancelBtn.addEventListener('click', ()=> pwOverlay.classList.remove('open'));
+pwOverlay.addEventListener('click', (e)=>{ if(e.target === pwOverlay) pwOverlay.classList.remove('open'); });
+
+function tryTeacherLogin(){
+  if(pwInput.value === TEACHER_PASSWORD){
+    pwOverlay.classList.remove('open');
+    studentArea.style.display = 'none';
+    teacherScreen.style.display = 'block';
+  } else {
+    pwError.textContent = '비밀번호가 올바르지 않습니다.';
+  }
+}
+pwSubmitBtn.addEventListener('click', tryTeacherLogin);
+pwInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryTeacherLogin(); });
+
+backToStudentBtn.addEventListener('click', ()=>{
+  teacherScreen.style.display = 'none';
+  studentArea.style.display = 'block';
+});
+
+const resetBoardBtn = document.getElementById('resetBoardBtn');
+resetBoardBtn.addEventListener('click', async ()=>{
+  if(!lbRef){
+    alert('순위표 저장 공간이 설정되지 않아 초기화할 것이 없습니다.');
+    return;
+  }
+  const ok = confirm('순위표의 모든 기록을 삭제할까요? 되돌릴 수 없습니다.');
+  if(!ok) return;
+  try{
+    await lbRef.remove();
+    alert('순위표를 초기화했습니다.');
+  }catch(e){
+    console.warn('reset failed', e);
+    alert('초기화 중 문제가 발생했습니다. 다시 시도해주세요.');
+  }
+});
+
+/* ---------------- QR code ---------------- */
+const qrOverlay = document.getElementById('qrOverlay');
+const qrTriggerBtn = document.getElementById('qrTriggerBtn');
+const qrCloseBtn = document.getElementById('qrCloseBtn');
+const qrCodeBox = document.getElementById('qrCodeBox');
+const qrLinkText = document.getElementById('qrLinkText');
+let qrRendered = false;
+
+qrTriggerBtn.addEventListener('click', ()=>{
+  const url = window.location.href;
+  qrLinkText.textContent = url;
+  if(!qrRendered){
+    if(typeof QRCode === 'undefined'){
+      qrCodeBox.innerHTML = '<div style="color:#c00;font-size:12px;max-width:200px;">QR 코드 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.</div>';
+    } else {
+      qrCodeBox.innerHTML = '';
+      new QRCode(qrCodeBox, { text: url, width: 200, height: 200 });
+    }
+    qrRendered = true;
+  }
+  qrOverlay.classList.add('open');
+});
+qrCloseBtn.addEventListener('click', ()=> qrOverlay.classList.remove('open'));
+qrOverlay.addEventListener('click', (e)=>{
+  if(e.target === qrOverlay) qrOverlay.classList.remove('open');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코드 정렬 레이스 — Java 변수</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --bg: #10121B;
+    --bg-2: #161927;
+    --panel: #1B1F30;
+    --panel-2: #232840;
+    --line: #2E3350;
+    --text: #ECEEF9;
+    --text-dim: #9599B8;
+    --mint: #4ADE9C;
+    --mint-dim: #2C8F63;
+    --amber: #FFB454;
+    --coral: #FF6B6B;
+    --violet: #8B7CFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(139,124,255,0.16), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(74,222,156,0.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding:28px 16px 60px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:760px;}
+
+  .top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.02em;
+    color:var(--mint);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint);}
+  h1{
+    font-size:24px;
+    line-height:1.25;
+    margin:6px 0 4px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--text-dim);font-size:14px;line-height:1.6;margin:0;}
+
+  .clock{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:30px;
+    color:var(--amber);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    min-width:150px;
+    text-align:center;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock small{display:block;font-family:'Inter',sans-serif;font-weight:600;font-size:10.5px;color:var(--text-dim);}
+
+  /* ---------- panels ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:24px;
+    margin-bottom:18px;
+  }
+
+  /* ---------- start screen ---------- */
+  #startScreen label{
+    display:block;
+    font-size:13px;
+    color:var(--text-dim);
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  #startScreen input{
+    width:100%;
+    background:var(--bg-2);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:13px 14px;
+    color:var(--text);
+    font-size:16px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    transition:border-color .15s;
+  }
+  #startScreen input:focus{border-color:var(--violet);}
+  .rules{
+    margin:18px 0 20px;
+    padding:14px 16px;
+    background:var(--bg-2);
+    border-radius:10px;
+    border:1px solid var(--line);
+    font-size:13.5px;
+    color:var(--text-dim);
+    line-height:1.7;
+  }
+  .rules b{color:var(--text);}
+
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    border:none;
+    border-radius:10px;
+    padding:14px 22px;
+    cursor:pointer;
+    transition:transform .1s, opacity .15s, box-shadow .15s;
+  }
+  button:active{transform:scale(0.98);}
+  .btn-primary{
+    background:linear-gradient(135deg, var(--mint), #38C08F);
+    color:#08160F;
+    width:100%;
+    box-shadow:0 8px 24px -8px rgba(74,222,156,0.5);
+  }
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--text-dim);
+    border:1.5px solid var(--line);
+  }
+  .btn-ghost:hover{border-color:var(--violet);color:var(--text);}
+
+  /* ---------- game screen ---------- */
+  #gameScreen{display:none;}
+  .game-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .player-chip{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--violet);
+    background:rgba(139,124,255,0.12);
+    border:1px solid rgba(139,124,255,0.35);
+    padding:6px 12px;
+    border-radius:999px;
+    flex-shrink:0;
+  }
+  .progress-wrap{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex:1;
+    min-width:140px;
+  }
+  .progress-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--text-dim);
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .progress-track{
+    flex:1;
+    height:8px;
+    border-radius:999px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--mint), var(--violet));
+    border-radius:999px;
+    transition:width .3s ease;
+    width:0%;
+  }
+  .task{
+    font-size:13.5px;
+    color:var(--text-dim);
+    margin-bottom:14px;
+    line-height:1.6;
+  }
+  .task b{color:var(--text);}
+
+  #cardList{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-2);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px 12px 6px;
+    user-select:none;
+    transition:border-color .15s, background .15s, box-shadow .15s;
+    touch-action: pan-y;
+  }
+  .card.dragging{
+    opacity:0.9;
+    border-color:var(--mint);
+    box-shadow:0 10px 24px -8px rgba(0,0,0,0.5);
+    background:var(--panel-2);
+    position:relative;
+    z-index:5;
+  }
+  .card .handle{
+    color:var(--text-dim);
+    font-size:20px;
+    letter-spacing:1px;
+    line-height:1;
+    flex-shrink:0;
+    padding:14px 10px;
+    cursor:grab;
+    touch-action:none;
+  }
+  .card .handle:active{cursor:grabbing;}
+  .card .idx{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:12px;
+    color:var(--bg);
+    background:var(--text-dim);
+    width:22px;
+    height:22px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .card code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    color:var(--text);
+    white-space:pre;
+    overflow-x:auto;
+  }
+
+  .check-row{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  #checkBtn{flex:1;}
+  #feedback{
+    margin-top:12px;
+    font-size:13.5px;
+    font-weight:600;
+    min-height:18px;
+  }
+  #feedback.wrong{color:var(--coral);}
+  #feedback.right{color:var(--mint);}
+
+  /* ---------- result screen ---------- */
+  #resultScreen{display:none;text-align:center;}
+  #resultScreen .medal{font-size:52px;margin-bottom:6px;}
+  #resultScreen h2{font-size:22px;margin:4px 0 2px;}
+  #resultScreen .time-big{
+    font-family:'JetBrains Mono',monospace;
+    font-size:44px;
+    font-weight:800;
+    color:var(--mint);
+    margin:14px 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  #resultScreen .time-big small{font-size:16px;color:var(--text-dim);font-weight:600;}
+  .result-actions{display:flex;gap:10px;margin-top:20px;}
+  .result-actions button{flex:1;}
+
+  /* ---------- leaderboard ---------- */
+  #board h3{
+    font-size:14px;
+    margin:0 0 14px;
+    color:var(--text-dim);
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  #board h3 .gift{font-size:16px;}
+  #boardList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  #boardList li{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:14px;
+  }
+  #boardList li.top1{border-color:var(--amber);background:rgba(255,180,84,0.08);}
+  .rank{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:800;
+    font-size:13px;
+    width:26px;
+    text-align:center;
+    color:var(--text-dim);
+    flex-shrink:0;
+  }
+  li.top1 .rank{color:var(--amber);}
+  .lb-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-time{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    color:var(--mint);
+    font-variant-numeric: tabular-nums;
+  }
+  .empty-board{color:var(--text-dim);font-size:13.5px;text-align:center;padding:14px 0;}
+
+  /* confetti canvas */
+  #confettiCanvas{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:50;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:12px;
+    margin-top:6px;
+  }
+  .teacher-link{
+    display:inline-block;
+    margin-top:10px;
+    background:none;
+    border:none;
+    color:var(--line);
+    font-size:11px;
+    padding:4px 8px;
+    cursor:pointer;
+    text-decoration:underline;
+    text-decoration-color:transparent;
+  }
+  .teacher-link:hover{color:var(--text-dim);}
+
+  /* ---------- modals (QR + password) ---------- */
+  #qrOverlay, #pwOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(8,9,14,0.72);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  #qrOverlay.open, #pwOverlay.open{display:flex;}
+  #qrModal, #pwModal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px;
+    max-width:340px;
+    width:100%;
+    text-align:center;
+  }
+  #qrModal h3, #pwModal h3{margin:0 0 4px;font-size:17px;}
+  #qrModal p, #pwModal p{color:var(--text-dim);font-size:13px;margin:4px 0 16px;line-height:1.6;}
+  #qrCodeBox{
+    background:#fff;
+    border-radius:12px;
+    padding:14px;
+    display:inline-block;
+    margin-bottom:14px;
+  }
+  #qrLinkText{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    word-break:break-all;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    margin-bottom:14px;
+  }
+  #qrCloseBtn{width:100%;}
+
+  #pwModal input{
+    width:100%;
+    background:var(--bg-2);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    color:var(--text);
+    font-size:16px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    margin-bottom:6px;
+  }
+  #pwModal input:focus{border-color:var(--violet);}
+  #pwError{color:var(--coral);font-size:12.5px;min-height:16px;text-align:left;margin-bottom:8px;}
+  .pw-actions{display:flex;gap:8px;margin-top:8px;}
+  .pw-actions button{flex:1;}
+
+  /* ---------- setup banner (shown if leaderboard storage isn't configured) ---------- */
+  .setup-banner{
+    display:none;
+    background:rgba(255,107,107,0.12);
+    border:1px solid var(--coral);
+    color:#FFC9C9;
+    font-size:13px;
+    padding:14px;
+    border-radius:10px;
+    margin-bottom:16px;
+    line-height:1.6;
+  }
+  .setup-banner button{padding:8px 14px;font-size:12.5px;}
+  .mono-box{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--text);
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    margin:6px 0;
+    word-break:break-all;
+    user-select:all;
+  }
+
+  /* ---------- teacher screen ---------- */
+  #teacherScreen{display:none;}
+  #teacherScreen h2{font-size:19px;margin:0 0 4px;}
+  #teacherScreen h3{font-size:14px;color:var(--text-dim);margin:0 0 12px;}
+  .teacher-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  .teacher-actions button{flex:1;min-width:160px;}
+  .btn-ghost.danger{border-color:rgba(255,107,107,0.5);color:var(--coral);}
+  .btn-ghost.danger:hover{border-color:var(--coral);background:rgba(255,107,107,0.08);}
+
+  .fb-setup{
+    margin-top:22px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .fb-setup h4{margin:0 0 10px;font-size:13.5px;color:var(--text);}
+  .fb-setup ol{margin:0;padding-left:20px;color:var(--text-dim);font-size:12.5px;line-height:1.9;}
+  .fb-setup li{margin-bottom:4px;}
+  .fb-setup code{
+    font-family:'JetBrains Mono',monospace;
+    background:var(--panel-2);
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:11.5px;
+    color:var(--mint);
+  }
+  .fb-setup a{color:var(--violet);}
+
+  /* ---------- mobile tweaks ---------- */
+  @media (max-width: 480px){
+    body{padding:18px 12px 40px;}
+    h1{font-size:20px;}
+    .clock{font-size:24px;min-width:120px;padding:7px 14px;}
+    .panel{padding:18px;border-radius:14px;}
+    .top{align-items:flex-start;}
+    .card code{font-size:13.5px;}
+    #resultScreen .time-big{font-size:36px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="confettiCanvas"></canvas>
+
+<div id="qrOverlay">
+  <div id="qrModal">
+    <h3>학생용 접속 QR 코드</h3>
+    <p>학생들이 휴대폰 카메라로 스캔하면 이 페이지로 바로 접속됩니다.</p>
+    <div id="qrCodeBox"></div>
+    <div id="qrLinkText"></div>
+    <button class="btn-ghost" id="qrCloseBtn">닫기</button>
+  </div>
+</div>
+
+
+<div id="qrOverlay">
+  <div id="qrModal">
+    <h3>학생용 접속 QR 코드</h3>
+    <p>학생들이 휴대폰 카메라로 스캔하면 이 페이지로 바로 접속됩니다.</p>
+    <div id="qrCodeBox"></div>
+    <div id="qrLinkText"></div>
+    <button class="btn-ghost" id="qrCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div id="pwOverlay">
+  <div id="pwModal">
+    <h3>교사 인증</h3>
+    <p>비밀번호를 입력하세요.</p>
+    <input type="password" id="pwInput" placeholder="비밀번호" autocomplete="off">
+    <div id="pwError"></div>
+    <div class="pw-actions">
+      <button class="btn-ghost" id="pwCancelBtn">취소</button>
+      <button class="btn-primary" id="pwSubmitBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- STUDENT-FACING AREA -->
+  <div id="studentArea">
+    <div class="top">
+      <div>
+        <div class="brand"><span class="dot"></span>CODE SORT RACE</div>
+        <h1>변수 선언 &amp; 대입 코드 정렬 게임</h1>
+        <p class="sub">코드 카드를 끌어서 올바른 실행 순서로 정렬하세요. 마우스와 휴대폰 터치 모두 가능합니다.</p>
+      </div>
+      <div class="clock" id="clockBox">
+        <small>TIME</small>
+        <span id="clockText">00:00.0</span>
+      </div>
+    </div>
+
+    <div class="setup-banner" id="setupBanner">
+      ⚠️ 순위표 저장 공간(Firebase)이 아직 설정되지 않았습니다. 교사용 화면에서 설정 안내를 확인해주세요.
+    </div>
+
+    <!-- START -->
+    <div class="panel" id="startScreen">
+      <label for="nameInput">이름 / Name</label>
+      <input id="nameInput" type="text" placeholder="이름을 입력하세요 (Enter your name)" maxlength="20" autocomplete="off">
+      <div class="rules">
+        <b>진행 방법</b><br>
+        1. 이름을 입력하고 시작 버튼을 누르면 타이머가 시작됩니다.<br>
+        2. 코드 카드를 끌어서(마우스 드래그 또는 손가락 터치) 올바른 순서로 정렬하세요.<br>
+        3. 총 <b>10문제</b>를 연속으로 풀며, 한 문제를 맞히면 바로 다음 문제로 넘어갑니다.<br>
+        4. 10문제를 모두 마치면 전체 걸린 시간이 기록되어 순위표에 올라갑니다.<br>
+        5. 가장 빠른 학생에게 선물이 있습니다 🎁
+      </div>
+      <button class="btn-primary" id="startBtn" disabled>시작하기 (Start)</button>
+    </div>
+
+    <!-- GAME -->
+    <div class="panel" id="gameScreen">
+      <div class="game-head">
+        <span class="player-chip" id="playerChip"></span>
+        <div class="progress-wrap">
+          <span class="progress-label" id="progressLabel">1 / 10</span>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div class="task">코드가 <b>순서대로 실행</b>되도록 카드를 위에서 아래로 정렬하세요.</div>
+      <ul id="cardList"></ul>
+      <div class="check-row">
+        <button class="btn-primary" id="checkBtn">정답 확인 (Check)</button>
+      </div>
+      <div id="feedback"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="panel" id="resultScreen">
+      <div class="medal">🎉</div>
+      <h2 id="resultName"></h2>
+      <p class="sub" style="margin-bottom:6px;">10문제를 모두 완료했습니다!</p>
+      <div class="time-big"><span id="resultTime"></span><small> 초</small></div>
+      <div class="result-actions">
+        <button class="btn-ghost" id="playAgainBtn">다른 학생 도전 (Next player)</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD (read-only for students) -->
+    <div class="panel" id="board">
+      <h3><span class="gift">🏆</span>실시간 순위표 (Leaderboard) — 빠른 순</h3>
+      <ul id="boardList"></ul>
+    </div>
+
+    <footer>
+      학생마다 서로 다른 10문제 세트가 자동으로 배정됩니다 · Each student gets a different set of 10 problems<br>
+      <button id="teacherLinkBtn" class="teacher-link">교사용 관리 화면</button>
+    </footer>
+  </div>
+
+  <!-- TEACHER-ONLY AREA (password-gated) -->
+  <div class="panel" id="teacherScreen">
+    <h2>🔒 교사용 관리 화면</h2>
+    <p class="sub">이 화면은 비밀번호를 아는 교사에게만 보입니다. 학생 화면에는 노출되지 않습니다.</p>
+
+    <div class="teacher-actions">
+      <button class="btn-ghost" id="qrTriggerBtn">📱 학생용 QR 코드 보기</button>
+      <button class="btn-ghost danger" id="resetBoardBtn">🗑 순위표 초기화</button>
+    </div>
+
+    <h3 style="margin-top:22px;">실시간 순위표</h3>
+    <ul id="teacherBoardList"></ul>
+
+    <div class="fb-setup" id="fbSetupInfo">
+      <h4>⚙️ 순위표 저장 공간(Firebase) 설정 방법 — 최초 1회만</h4>
+      <ol>
+        <li><a href="https://console.firebase.google.com" target="_blank">firebase.google.com/console</a> 접속 → 구글 계정으로 로그인 → "프로젝트 추가"로 새 프로젝트 생성 (Analytics는 꺼도 됩니다)</li>
+        <li>왼쪽 메뉴에서 <b>빌드 → Realtime Database</b> 클릭 → "데이터베이스 만들기" → <b>테스트 모드로 시작</b> 선택</li>
+        <li>프로젝트 설정(톱니바퀴) → "내 앱" → 웹 아이콘(&lt;/&gt;) 클릭 → 앱 등록 (호스팅 설정은 건너뛰기)</li>
+        <li>화면에 나오는 <code>firebaseConfig</code> 객체 전체를 복사</li>
+        <li>이 파일에서 <code>const firebaseConfig = { ... }</code> 부분을 찾아 복사한 내용으로 통째로 교체하고 다시 배포</li>
+      </ol>
+    </div>
+
+    <button class="btn-ghost" id="backToStudentBtn" style="margin-top:18px;width:100%;">← 학생 화면으로 돌아가기</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- problem bank ---------------- */
+/* Every problem is a SINGLE forced chain: each line either (a) must come
+   after the previous one because Java requires the variable to be declared
+   and definitely-assigned before it's read (declare -> assign -> print), or
+   (b) directly uses the value from the line before it (a = ...; b = a + ...;
+   print(b);). There is exactly one valid ordering per problem — no
+   reassignment ever happens after the only print (that "dead store" pattern,
+   e.g. printing a value and then changing it right after with nothing using
+   the new value, is confusing and was removed). */
+const PROBLEMS = [
+  // declare -> assign -> print (forced by definite-assignment)
+  { lines: ["int score;", "score = 90;", "System.out.println(score);"] },
+  { lines: ["String name;", "name = \"Anh\";", "System.out.println(name);"] },
+  { lines: ["double price;", "price = 1500.0;", "System.out.println(price);"] },
+  { lines: ["boolean isPass;", "isPass = false;", "System.out.println(isPass);"] },
+  { lines: ["char grade;", "grade = 'A';", "System.out.println(grade);"] },
+  { lines: ["int total;", "total = 0;", "System.out.println(total);"] },
+  { lines: ["String greeting;", "greeting = \"Hello\";", "System.out.println(greeting);"] },
+  { lines: ["boolean isStudent;", "isStudent = true;", "System.out.println(isStudent);"] },
+  { lines: ["double weight;", "weight = 55.0;", "System.out.println(weight);"] },
+  { lines: ["char initial;", "initial = 'K';", "System.out.println(initial);"] },
+  { lines: ["int minute;", "minute = 30;", "System.out.println(minute);"] },
+  { lines: ["String city;", "city = \"Busan\";", "System.out.println(city);"] },
+  // declare+init -> derived variable (reads the one before it) -> print
+  { lines: ["int a = 5;", "int b = a;", "System.out.println(b);"] },
+  { lines: ["int x = 10;", "int y = x + 5;", "System.out.println(y);"] },
+  { lines: ["double base = 100.0;", "double result = base * 2;", "System.out.println(result);"] },
+  { lines: ["int hour = 9;", "int nextHour = hour + 1;", "System.out.println(nextHour);"] },
+  { lines: ["double temp = 36.5;", "double adjusted = temp - 0.5;", "System.out.println(adjusted);"] },
+  { lines: ["int level = 1;", "int nextLevel = level + 1;", "System.out.println(nextLevel);"] },
+  // longer chains — each new line reads a variable from the line before
+  { lines: ["int base = 2;", "int square = base * base;", "int result = square + 1;", "System.out.println(result);"] },
+  { lines: ["double principal = 1000.0;", "double interest = principal * 0.1;", "double total = principal + interest;", "System.out.println(total);"] },
+];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* Each player gets their own random set of 10 *different* problems
+   (sampled from the pool of 22), so there are no repeats within a
+   student's run. Selection happens fresh every time startGame() runs. */
+const TOTAL_PROBLEMS = 10;
+let sessionProblems = [];   // this player's 10 problems, in play order
+let sessionIndex = 0;       // 0-based index of the current problem
+let problem = null;         // current problem object
+let displayOrder = null;    // current shuffled card order
+
+function buildSession(){
+  return shuffle(PROBLEMS).slice(0, TOTAL_PROBLEMS);
+}
+
+function shuffleDisplayOrder(chosenProblem){
+  let order;
+  do{
+    order = shuffle(chosenProblem.lines);
+  }while(order.join("|") === chosenProblem.lines.join("|") && chosenProblem.lines.length > 1);
+  return order;
+}
+
+function loadCurrentProblem(){
+  problem = sessionProblems[sessionIndex];
+  displayOrder = shuffleDisplayOrder(problem);
+  progressLabel.textContent = (sessionIndex + 1) + " / " + TOTAL_PROBLEMS;
+  progressFill.style.width = Math.round((sessionIndex / TOTAL_PROBLEMS) * 100) + "%";
+  renderCards();
+}
+
+/* ---------------- state ---------------- */
+let playerName = "";
+let startTime = null;
+let clockTimer = null;
+let finished = false;
+
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const resultScreen = document.getElementById('resultScreen');
+const nameInput = document.getElementById('nameInput');
+const startBtn = document.getElementById('startBtn');
+const cardList = document.getElementById('cardList');
+const checkBtn = document.getElementById('checkBtn');
+const feedback = document.getElementById('feedback');
+const clockText = document.getElementById('clockText');
+const playerChip = document.getElementById('playerChip');
+const progressLabel = document.getElementById('progressLabel');
+const progressFill = document.getElementById('progressFill');
+const resultName = document.getElementById('resultName');
+const resultTime = document.getElementById('resultTime');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const boardList = document.getElementById('boardList');
+const teacherBoardList = document.getElementById('teacherBoardList');
+const setupBanner = document.getElementById('setupBanner');
+
+nameInput.addEventListener('input', ()=>{
+  startBtn.disabled = nameInput.value.trim().length === 0;
+});
+nameInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !startBtn.disabled) startGame();
+});
+startBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', ()=> location.reload());
+
+function startGame(){
+  playerName = nameInput.value.trim().slice(0,20);
+  if(!playerName) return;
+
+  sessionProblems = buildSession();
+  sessionIndex = 0;
+  finished = false;
+
+  playerChip.textContent = "👤 " + playerName;
+  startScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+  loadCurrentProblem();
+  startTime = performance.now();
+  clockTimer = setInterval(updateClock, 50);
+}
+
+function updateClock(){
+  const elapsed = (performance.now() - startTime)/1000;
+  clockText.textContent = formatTime(elapsed);
+}
+function formatTime(sec){
+  const m = Math.floor(sec/60);
+  const s = (sec - m*60).toFixed(1);
+  return String(m).padStart(2,'0') + ":" + String(s).padStart(4,'0');
+}
+
+/* ---------------- drag & drop card list (Pointer Events = mouse + touch) ---------------- */
+let dragCard = null;
+let dragPointerId = null;
+
+function renderCards(){
+  cardList.innerHTML = '';
+  displayOrder.forEach((line, i)=>{
+    const li = document.createElement('li');
+    li.className = 'card';
+    li.dataset.line = line;
+    li.innerHTML = `<span class="handle">⠿⠿</span><span class="idx">${i+1}</span><code></code>`;
+    li.querySelector('code').textContent = line;
+
+    const handle = li.querySelector('.handle');
+    handle.addEventListener('pointerdown', (e)=> onDragStart(e, li));
+
+    cardList.appendChild(li);
+  });
+}
+
+function onDragStart(e, li){
+  dragCard = li;
+  dragPointerId = e.pointerId;
+  try{ li.setPointerCapture(e.pointerId); }catch(err){}
+  li.classList.add('dragging');
+  document.addEventListener('pointermove', onDragMove);
+  document.addEventListener('pointerup', onDragEnd);
+  document.addEventListener('pointercancel', onDragEnd);
+  e.preventDefault();
+}
+
+function onDragMove(e){
+  if(!dragCard) return;
+  const y = e.clientY;
+  const siblings = [...cardList.children].filter(c => c !== dragCard);
+  let placed = false;
+  for(const sib of siblings){
+    const rect = sib.getBoundingClientRect();
+    const mid = rect.top + rect.height/2;
+    if(y < mid){
+      cardList.insertBefore(dragCard, sib);
+      placed = true;
+      break;
+    }
+  }
+  if(!placed) cardList.appendChild(dragCard);
+  renumber();
+}
+
+function onDragEnd(){
+  if(!dragCard) return;
+  dragCard.classList.remove('dragging');
+  try{ dragCard.releasePointerCapture(dragPointerId); }catch(err){}
+  dragCard = null;
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragEnd);
+  document.removeEventListener('pointercancel', onDragEnd);
+  renumber();
+}
+
+function renumber(){
+  [...cardList.children].forEach((li,i)=>{
+    li.querySelector('.idx').textContent = i+1;
+  });
+}
+
+checkBtn.addEventListener('click', ()=>{
+  if(finished) return;
+  const current = [...cardList.children].map(li => li.dataset.line);
+  const correct = current.join('|') === problem.lines.join('|');
+  if(!correct){
+    feedback.textContent = '아직 순서가 맞지 않아요. 다시 시도해보세요! (Not quite — try again.)';
+    feedback.className = 'wrong';
+    return;
+  }
+
+  const isLast = sessionIndex === TOTAL_PROBLEMS - 1;
+
+  if(!isLast){
+    feedback.textContent = '정답입니다! 다음 문제로 넘어갑니다 🎉';
+    feedback.className = 'right';
+    launchConfetti(45);
+    playDing();
+    checkBtn.disabled = true;
+    setTimeout(()=>{
+      sessionIndex++;
+      loadCurrentProblem();
+      feedback.textContent = '';
+      feedback.className = '';
+      checkBtn.disabled = false;
+    }, 700);
+  } else {
+    finished = true;
+    clearInterval(clockTimer);
+    progressLabel.textContent = TOTAL_PROBLEMS + " / " + TOTAL_PROBLEMS;
+    progressFill.style.width = '100%';
+    const elapsedSec = (performance.now() - startTime)/1000;
+    feedback.textContent = '정답입니다! 10문제를 모두 완료했어요! 🎉';
+    feedback.className = 'right';
+    onSolved(elapsedSec);
+  }
+});
+
+/* ---------------- confetti ---------------- */
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function launchConfetti(count){
+  count = count || 160;
+  const colors = ['#4ADE9C','#FFB454','#8B7CFF','#FF6B6B','#5FD3F3'];
+  const particles = [];
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: canvas.width/2 + (Math.random()-0.5)*200,
+      y: -20 - Math.random()*200,
+      vx: (Math.random()-0.5)*6,
+      vy: Math.random()*3 + 2,
+      size: Math.random()*7+4,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI*2,
+      vr: (Math.random()-0.5)*0.3,
+      shape: Math.random()<0.5 ? 'rect':'circle'
+    });
+  }
+  let frame = 0;
+  const maxFrames = 220;
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if(p.shape === 'rect'){
+        ctx.fillRect(-p.size/2,-p.size/2*0.6,p.size,p.size*0.6);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0,0,p.size/2,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+    frame++;
+    if(frame < maxFrames){
+      requestAnimationFrame(tick);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+  tick();
+}
+
+/* short single chime — used after each of the first 9 correct problems */
+function playDing(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const actx = new AudioCtx();
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = 880;
+    g.gain.value = 0.0001;
+    osc.connect(g);
+    g.connect(actx.destination);
+    const t0 = actx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.22, t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+0.35);
+    osc.start(t0);
+    osc.stop(t0+0.4);
+    setTimeout(()=>actx.close(), 600);
+  }catch(e){ console.warn('audio not available', e); }
+}
+
+/* ---------------- applause sound (synth, no external files) ---------------- */
+function playApplause(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const actx = new AudioCtx();
+    const master = actx.createGain();
+    master.gain.value = 0.35;
+    master.connect(actx.destination);
+
+    // individual "clap" = filtered noise burst
+    function clap(time, gainVal){
+      const bufferSize = actx.sampleRate * 0.12;
+      const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2 -1) * Math.pow(1 - i/bufferSize, 2);
+      }
+      const src = actx.createBufferSource();
+      src.buffer = buffer;
+      const bp = actx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1500 + Math.random()*1500;
+      bp.Q.value = 0.7;
+      const g = actx.createGain();
+      g.gain.value = gainVal;
+      src.connect(bp);
+      bp.connect(g);
+      g.connect(master);
+      src.start(time);
+    }
+
+    // burst of many random claps over ~1.6s to sound like applause
+    const now = actx.currentTime;
+    for(let i=0;i<55;i++){
+      const t = now + Math.random()*1.6;
+      clap(t, 0.5 + Math.random()*0.5);
+    }
+
+    // a short cheerful chime on top
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i)=>{
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.value = 0.0001;
+      osc.connect(g);
+      g.connect(actx.destination);
+      const t0 = now + i*0.09;
+      g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+0.5);
+      osc.start(t0);
+      osc.stop(t0+0.55);
+    });
+
+    setTimeout(()=>actx.close(), 2500);
+  }catch(e){ console.warn('audio not available', e); }
+}
+
+/* ---------------- shared leaderboard storage (Firebase Realtime Database) ----------------
+   ONE-TIME SETUP (teacher, do this once before class — full walkthrough is
+   also shown on the 교사용 관리 화면 in the app once you're logged in there):
+   1. https://console.firebase.google.com → sign in with a Google account →
+      "프로젝트 추가" to create a new project (Analytics can be turned off).
+   2. Left menu → 빌드 → Realtime Database → "데이터베이스 만들기" →
+      choose "테스트 모드로 시작" (test mode: open read/write, fine for a
+      short classroom activity — lock it down later if you keep using it).
+   3. Project settings (gear icon) → "내 앱" → the web icon (</>) → register
+      an app (skip hosting).
+   4. Copy the whole firebaseConfig object shown on screen.
+   5. Paste it below, replacing the empty {} — then redeploy. */
+const firebaseConfig = {
+  apiKey: "AIzaSyBK-SpHbrGI_uOVN0wytsLgFZ8sVuozOwc",
+  authDomain: "javagame-222db.firebaseapp.com",
+  databaseURL: "https://javagame-222db-default-rtdb.firebaseio.com",
+  projectId: "javagame-222db",
+  storageBucket: "javagame-222db.firebasestorage.app",
+  messagingSenderId: "179926589148",
+  appId: "1:179926589148:web:c3f015004f188841835e19",
+  measurementId: "G-P8772EJZE0"
+};
+
+const storageAvailable = !!(firebaseConfig && firebaseConfig.databaseURL);
+if(!storageAvailable) setupBanner.style.display = 'block';
+
+let lbRef = null;
+if(storageAvailable){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    lbRef = firebase.database().ref('leaderboard');
+  }catch(e){
+    console.warn('firebase init failed', e);
+  }
+}
+
+function boardTargets(){
+  return [boardList, teacherBoardList].filter(Boolean);
+}
+function setBoardMessage(msg){
+  boardTargets().forEach(el => { el.innerHTML = '<div class="empty-board">' + msg + '</div>'; });
+}
+function renderBoard(entries){
+  boardTargets().forEach(el => {
+    el.innerHTML = '';
+    if(entries.length === 0){
+      el.innerHTML = '<div class="empty-board">아직 기록이 없습니다. 첫 번째 도전자가 되어보세요!</div>';
+      return;
+    }
+    entries.slice(0,10).forEach((e,i)=>{
+      const li = document.createElement('li');
+      if(i===0) li.className = 'top1';
+      const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+      li.innerHTML = `<span class="rank">${medal}</span><span class="lb-name"></span><span class="lb-time">${(e.timeMs/1000).toFixed(1)}초</span>`;
+      li.querySelector('.lb-name').textContent = e.name;
+      el.appendChild(li);
+    });
+  });
+}
+
+if(lbRef){
+  // .on('value', ...) fires immediately with current data, then again on every
+  // change from any student's browser — genuinely realtime, no polling needed.
+  lbRef.on('value', (snapshot) => {
+    const val = snapshot.val() || {};
+    const entries = Object.values(val).sort((a,b)=> a.timeMs - b.timeMs);
+    renderBoard(entries);
+  }, (err) => {
+    console.warn('leaderboard listener failed', err);
+    setBoardMessage('순위표를 불러오지 못했습니다. Firebase 설정(규칙 포함)을 확인해주세요.');
+  });
+} else if(storageAvailable === false){
+  setBoardMessage('순위표 저장 공간이 아직 설정되지 않았습니다.');
+}
+
+async function saveResult(name, timeMs){
+  if(!lbRef) return;
+  try{
+    await lbRef.push({ name, timeMs, ts: Date.now() });
+  }catch(e){
+    console.warn('leaderboard save failed', e);
+    feedback.textContent = '기록 저장 중 문제가 발생했어요. 순위표에 반영되지 않을 수 있습니다.';
+    feedback.className = 'wrong';
+  }
+}
+
+async function onSolved(elapsedSec){
+  const timeMs = Math.round(elapsedSec*1000);
+  launchConfetti();
+  playApplause();
+  await saveResult(playerName, timeMs);
+
+  setTimeout(()=>{
+    gameScreen.style.display = 'none';
+    resultScreen.style.display = 'block';
+    resultName.textContent = playerName + " 님, 축하합니다!";
+    resultTime.textContent = (timeMs/1000).toFixed(1);
+  }, 900);
+}
+
+/* ---------------- teacher screen (password-gated) ---------------- */
+const TEACHER_PASSWORD = 'silla123!@#';
+const studentArea = document.getElementById('studentArea');
+const teacherScreen = document.getElementById('teacherScreen');
+const teacherLinkBtn = document.getElementById('teacherLinkBtn');
+const backToStudentBtn = document.getElementById('backToStudentBtn');
+const pwOverlay = document.getElementById('pwOverlay');
+const pwInput = document.getElementById('pwInput');
+const pwError = document.getElementById('pwError');
+const pwSubmitBtn = document.getElementById('pwSubmitBtn');
+const pwCancelBtn = document.getElementById('pwCancelBtn');
+
+teacherLinkBtn.addEventListener('click', ()=>{
+  pwInput.value = '';
+  pwError.textContent = '';
+  pwOverlay.classList.add('open');
+  setTimeout(()=> pwInput.focus(), 50);
+});
+pwCancelBtn.addEventListener('click', ()=> pwOverlay.classList.remove('open'));
+pwOverlay.addEventListener('click', (e)=>{ if(e.target === pwOverlay) pwOverlay.classList.remove('open'); });
+
+function tryTeacherLogin(){
+  if(pwInput.value === TEACHER_PASSWORD){
+    pwOverlay.classList.remove('open');
+    studentArea.style.display = 'none';
+    teacherScreen.style.display = 'block';
+  } else {
+    pwError.textContent = '비밀번호가 올바르지 않습니다.';
+  }
+}
+pwSubmitBtn.addEventListener('click', tryTeacherLogin);
+pwInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryTeacherLogin(); });
+
+backToStudentBtn.addEventListener('click', ()=>{
+  teacherScreen.style.display = 'none';
+  studentArea.style.display = 'block';
+});
+
+/* teacher-only: clear the leaderboard so a new class can start fresh */
+const resetBoardBtn = document.getElementById('resetBoardBtn');
+resetBoardBtn.addEventListener('click', async ()=>{
+  if(!lbRef){
+    alert('순위표 저장 공간이 설정되지 않아 초기화할 것이 없습니다.');
+    return;
+  }
+  const ok = confirm('순위표의 모든 기록을 삭제할까요? 되돌릴 수 없습니다.');
+  if(!ok) return;
+  try{
+    await lbRef.remove();
+    alert('순위표를 초기화했습니다.');
+  }catch(e){
+    console.warn('reset failed', e);
+    alert('초기화 중 문제가 발생했습니다. 다시 시도해주세요.');
+  }
+});
+
+/* ---------------- QR code (teacher shows this so students can scan in) ---------------- */
+const qrOverlay = document.getElementById('qrOverlay');
+const qrTriggerBtn = document.getElementById('qrTriggerBtn');
+const qrCloseBtn = document.getElementById('qrCloseBtn');
+const qrCodeBox = document.getElementById('qrCodeBox');
+const qrLinkText = document.getElementById('qrLinkText');
+let qrRendered = false;
+
+qrTriggerBtn.addEventListener('click', ()=>{
+  const url = window.location.href;
+  qrLinkText.textContent = url;
+  if(!qrRendered){
+    if(typeof QRCode === 'undefined'){
+      qrCodeBox.innerHTML = '<div style="color:#c00;font-size:12px;max-width:200px;">QR 코드 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.</div>';
+    } else {
+      qrCodeBox.innerHTML = '';
+      new QRCode(qrCodeBox, { text: url, width: 200, height: 200 });
+    }
+    qrRendered = true;
+  }
+  qrOverlay.classList.add('open');
+});
+qrCloseBtn.addEventListener('click', ()=> qrOverlay.classList.remove('open'));
+qrOverlay.addEventListener('click', (e)=>{
+  if(e.target === qrOverlay) qrOverlay.classList.remove('open');
+});
+</script>
+</body>
+</html>
